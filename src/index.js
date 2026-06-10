@@ -344,4 +344,60 @@ function join(data1, data2, opts = {}) {
   return { headers: allHeaders, rows: result };
 }
 
-module.exports = { parse, stringify, parseObjects, filter, sort, aggregate, select, compute, summary, duplicates, pivot, join };
+// --- Rename columns ---
+function rename(data, opts = {}) {
+  const parsed = parse(data);
+  if (parsed.length === 0) return { headers: [], rows: [] };
+  const headers = parsed[0];
+  const mapping = (opts.mapping || '').split(',').map(m => m.trim()).filter(Boolean);
+  if (mapping.length === 0) throw new Error('--mapping required (old:new,old2:new2)');
+
+  const map = {};
+  mapping.forEach(m => {
+    const [oldName, newName] = m.split(':').map(s => s.trim());
+    if (!oldName || !newName) throw new Error(`Invalid mapping: ${m}. Use old:new format.`);
+    map[oldName] = newName;
+  });
+
+  const newHeaders = headers.map(h => map[h] || h);
+  const { rows } = parseObjects(data);
+  const renamedRows = rows.map(row => {
+    const obj = {};
+    headers.forEach((h, i) => {
+      obj[newHeaders[i]] = row[h] ?? '';
+    });
+    return obj;
+  });
+
+  return { headers: newHeaders, rows: renamedRows };
+}
+
+// --- Random sample of rows ---
+function sample(data, opts = {}) {
+  const { headers, rows } = parseObjects(data);
+  const n = parseInt(opts.n || '10', 10);
+  const seed = opts.seed != null ? Number(opts.seed) : null;
+
+  if (n <= 0) throw new Error('--n must be > 0');
+  if (n >= rows.length) return { headers, rows };
+
+  // Simple seeded PRNG (mulberry32)
+  let state = seed != null ? seed >>> 0 : (Math.random() * 0xffffffff) >>> 0;
+  const rand = () => {
+    state |= 0; state = state + 0x6D2B79F5 | 0;
+    let t = Math.imul(state ^ state >>> 15, 1 | state);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+
+  // Fisher-Yates partial shuffle
+  const sampled = [...rows];
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(rand() * (sampled.length - i));
+    [sampled[i], sampled[j]] = [sampled[j], sampled[i]];
+  }
+
+  return { headers, rows: sampled.slice(0, n) };
+}
+
+module.exports = { parse, stringify, parseObjects, filter, sort, aggregate, select, compute, summary, duplicates, pivot, join, rename, sample };

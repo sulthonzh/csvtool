@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { parse, stringify, parseObjects, filter, sort, aggregate, select, compute, summary, duplicates, pivot, join } = require('../src/index');
+const { parse, stringify, parseObjects, filter, sort, aggregate, select, compute, summary, duplicates, pivot, join, rename, sample } = require('../src/index');
 
 let passed = 0;
 let failed = 0;
@@ -279,6 +279,65 @@ console.log('Head/Tail tests:');
   const { headers, rows } = parseObjects(SAMPLE);
   assertEq(rows.slice(0, 3).length, 3, 'head 3 rows');
   assertEq(rows.slice(-2).length, 2, 'tail 2 rows');
+}
+
+// --- Rename ---
+console.log('Rename tests:');
+{
+  const { headers, rows } = rename(SAMPLE, { mapping: 'name:full_name,age:years' });
+  assertEq(headers.includes('full_name'), true, 'rename header updated');
+  assertEq(headers.includes('years'), true, 'rename header updated 2');
+  assertEq(headers.includes('city'), true, 'rename untouched header kept');
+  assertEq(rows[0].full_name, 'Alice', 'rename data preserved');
+  assertEq(rows[0].years, '30', 'rename data preserved 2');
+}
+
+{
+  try {
+    rename(SAMPLE, { mapping: '' });
+    assert(false, 'rename empty mapping should throw');
+  } catch (e) {
+    assert(e.message.includes('mapping required'), 'rename empty mapping throws');
+  }
+}
+
+{
+  try {
+    rename(SAMPLE, { mapping: 'name' });
+    assert(false, 'rename invalid format should throw');
+  } catch (e) {
+    assert(e.message.includes('Invalid mapping'), 'rename invalid format throws');
+  }
+}
+
+// --- Sample ---
+console.log('Sample tests:');
+{
+  const { headers, rows } = sample(SAMPLE, { n: '3', seed: '42' });
+  assertEq(headers.length, 4, 'sample keeps headers');
+  assertEq(rows.length, 3, 'sample correct count');
+}
+
+{
+  // Same seed = same results
+  const r1 = sample(SAMPLE, { n: '3', seed: '123' });
+  const r2 = sample(SAMPLE, { n: '3', seed: '123' });
+  assertEq(r1.rows.map(r => r.name), r2.rows.map(r => r.name), 'sample deterministic with seed');
+}
+
+{
+  // n >= total rows returns all
+  const { rows } = sample(SAMPLE, { n: '100' });
+  assertEq(rows.length, 6, 'sample returns all when n >= total');
+}
+
+{
+  try {
+    sample(SAMPLE, { n: '0' });
+    assert(false, 'sample n=0 should throw');
+  } catch (e) {
+    assert(e.message.includes('must be > 0'), 'sample n=0 throws');
+  }
 }
 
 // --- Summary of results ---

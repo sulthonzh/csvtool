@@ -80,6 +80,8 @@ const COMMANDS = {
   join: { desc: 'Join two CSVs on a column', needs: ['on', 'file2'] },
   head: { desc: 'Show first N rows', needs: [] },
   tail: { desc: 'Show last N rows', needs: [] },
+  rename: { desc: 'Rename columns (old:new,old2:new2)', needs: ['mapping'] },
+  sample: { desc: 'Random sample of N rows', needs: [] },
   cols: { desc: 'List column names', needs: [] },
   count: { desc: 'Count rows', needs: [] },
 };
@@ -103,6 +105,8 @@ function usage() {
   out += '  --expr <expr>       JS expression for compute\n';
   out += '  --on <col>          Join column\n';
   out += '  --type <type>       Join type (inner/left/right/full)\n';
+  out += '  --mapping <m>       Column rename mapping (old:new,old2:new2)\n';
+  out += '  --seed <num>        Random seed for sample reproducibility\n';
   out += '  --desc              Sort descending\n';
   out += '  --numeric           Sort as numbers\n';
   out += '  -n <count>          Row count for head/tail (default: 10)\n';
@@ -136,7 +140,7 @@ async function run() {
   const opts = { delimiter };
 
   // Pass relevant options
-  ['column', 'columns', 'condition', 'op', 'row', 'col', 'value', 'name', 'expr', 'on', 'type', 'desc', 'numeric'].forEach(k => {
+  ['column', 'columns', 'condition', 'op', 'row', 'col', 'value', 'name', 'expr', 'on', 'type', 'desc', 'numeric', 'mapping', 'n', 'seed'].forEach(k => {
     if (args[k] !== undefined) opts[k] = args[k];
   });
 
@@ -189,6 +193,12 @@ async function run() {
       result = { columns: parsed[0] || [] };
       break;
     }
+    case 'rename':
+      result = api.rename(input, opts);
+      break;
+    case 'sample':
+      result = api.sample(input, opts);
+      break;
     case 'count': {
       const parsed = api.parse(input, opts);
       result = { rows: parsed.length - 1, columns: parsed[0]?.length || 0 };

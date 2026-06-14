@@ -6,7 +6,6 @@ const api = require('./index');
 function readInput(opts) {
   if (opts.file) return fs.readFileSync(opts.file, 'utf-8');
   if (opts.data) return opts.data;
-  // Read stdin
   if (!process.stdin.isTTY) {
     return fs.readFileSync('/dev/stdin', 'utf-8');
   }
@@ -30,7 +29,6 @@ function formatOutput(result, opts) {
     return [headerRow, sepRow, ...dataRows].join('\n');
   }
 
-  // Default: CSV
   if (result.headers && result.rows) {
     const rows = Array.isArray(result.rows[0])
       ? [result.headers, ...result.rows]
@@ -139,7 +137,6 @@ async function run() {
   const input = readInput(args);
   const opts = { delimiter };
 
-  // Pass relevant options
   ['column', 'columns', 'condition', 'op', 'row', 'col', 'value', 'name', 'expr', 'on', 'type', 'desc', 'numeric', 'mapping', 'n', 'seed'].forEach(k => {
     if (args[k] !== undefined) opts[k] = args[k];
   });

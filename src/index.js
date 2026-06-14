@@ -1,7 +1,6 @@
 'use strict';
 const { parse, stringify, parseObjects } = require('./parser');
 
-// --- Filter rows where column matches a condition ---
 function filter(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   if (!opts.column) throw new Error('--column required for filter');
@@ -40,7 +39,6 @@ function filter(data, opts = {}) {
   return { headers, rows: filtered };
 }
 
-// --- Sort rows by column ---
 function sort(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   if (!opts.column) throw new Error('--column required for sort');
@@ -62,7 +60,6 @@ function sort(data, opts = {}) {
   return { headers, rows: sorted };
 }
 
-// --- Aggregate: sum, avg, min, max, count, countunique ---
 function aggregate(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   if (!opts.column) throw new Error('--column required for aggregate');
@@ -112,7 +109,6 @@ function aggregate(data, opts = {}) {
   return { column: col, op, result };
 }
 
-// --- Select/reorder columns ---
 function select(data, opts = {}) {
   const parsed = parse(data);
   if (parsed.length === 0) return { headers: [], rows: [] };
@@ -134,7 +130,6 @@ function select(data, opts = {}) {
   }) };
 }
 
-// --- Add computed column ---
 function compute(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   if (!opts.name) throw new Error('--name required for new column name');
@@ -159,7 +154,6 @@ function compute(data, opts = {}) {
   return { headers: [...headers, name], rows: computed };
 }
 
-// --- Summary stats per column ---
 function summary(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   return headers.map(h => {
@@ -181,7 +175,6 @@ function summary(data, opts = {}) {
       info.median = sorted.length % 2 ? sorted[mid] : +((sorted[mid - 1] + sorted[mid]) / 2).toFixed(2);
     } else {
       info.type = 'text';
-      // Most common value
       const freq = {};
       vals.forEach(v => { freq[v] = (freq[v] || 0) + 1; });
       info.top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
@@ -192,7 +185,6 @@ function summary(data, opts = {}) {
   });
 }
 
-// --- Find duplicates based on columns ---
 function duplicates(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   const cols = (opts.columns || '').split(',').map(c => c.trim()).filter(Boolean);
@@ -213,7 +205,6 @@ function duplicates(data, opts = {}) {
   return { columns: cols, count: dups.length, duplicates: dups };
 }
 
-// --- Pivot table ---
 function pivot(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   if (!opts.row) throw new Error('--row required');
@@ -225,7 +216,6 @@ function pivot(data, opts = {}) {
   const op = opts.op || 'sum';
 
   if (!colCol) {
-    // Simple group-by
     const groups = {};
     rows.forEach(r => {
       const key = r[rowCol] ?? '';
@@ -250,7 +240,6 @@ function pivot(data, opts = {}) {
     return { headers: [rowCol, `${op}(${valCol})`], rows: result };
   }
 
-  // Full pivot with column axis
   const rowKeys = [...new Set(rows.map(r => r[rowCol] ?? ''))];
   const colKeys = [...new Set(rows.map(r => r[colCol] ?? ''))];
 
@@ -285,7 +274,6 @@ function pivot(data, opts = {}) {
   return { headers: [rowCol, ...colKeys], rows: result };
 }
 
-// --- Join two CSVs ---
 function join(data1, data2, opts = {}) {
   const d1 = parseObjects(data1);
   const d2 = parseObjects(data2);
@@ -344,7 +332,6 @@ function join(data1, data2, opts = {}) {
   return { headers: allHeaders, rows: result };
 }
 
-// --- Rename columns ---
 function rename(data, opts = {}) {
   const parsed = parse(data);
   if (parsed.length === 0) return { headers: [], rows: [] };
@@ -372,7 +359,6 @@ function rename(data, opts = {}) {
   return { headers: newHeaders, rows: renamedRows };
 }
 
-// --- Random sample of rows ---
 function sample(data, opts = {}) {
   const { headers, rows } = parseObjects(data);
   const n = parseInt(opts.n || '10', 10);

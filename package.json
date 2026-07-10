@@ -3,12 +3,35 @@
   "version": "1.0.0",
   "description": "Zero-dep CSV processing CLI — filter, sort, aggregate, transform CSVs from the terminal",
   "main": "src/index.js",
-  "bin": { "csvtool": "./bin/csvtool.js" },
-  "scripts": { "test": "node test/run.js" },
-  "keywords": ["csv", "cli", "filter", "sort", "aggregate", "transform", "zero-dependencies"],
+  "bin": {
+    "csvtool": "./bin/csvtool.js"
+  },
+  "scripts": {
+    "test": "node test/run.js"
+  },
+  "keywords": [
+    "csv",
+    "cli",
+    "filter",
+    "sort",
+    "aggregate",
+    "transform",
+    "zero-dependencies"
+  ],
   "author": "sulthonzh",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/sulthonzh/csvtool" },
-  "engines": { "node": ">=14" },
-  "files": ["bin", "src"]
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sulthonzh/csvtool"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0"
+  }
 }
